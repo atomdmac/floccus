@@ -141,6 +141,35 @@
               </div>
             </template>
 
+            <template v-else-if="adapter === 'linkding'">
+              <div class="headline">
+                {{ t('LabelServersetup') }}
+              </div>
+              <v-text-field
+                v-model="server"
+                :rules="[validateUrl]"
+                :label="t('LabelLinkdingurl')"
+                :loading="isServerTestRunning"
+                :error-messages="serverTestError || serverisNotHttps" />
+              <v-text-field
+                v-model="apiToken"
+                :label="t('LabelApiToken')"
+                :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                :type="showPassword ? 'text' : 'password'"
+                @click:append="showPassword = !showPassword" />
+
+              <div class="d-flex flex-row justify-space-between">
+                <v-btn @click="currentStep--">
+                  {{ t('LabelBack') }}
+                </v-btn>
+                <v-btn
+                  class="primary"
+                  @click="testLinkdingServer">
+                  {{ t('LabelContinue') }}
+                </v-btn>
+              </div>
+            </template>
+
             <template v-else-if="adapter === 'linkwarden'">
               <div class="headline">
                 {{ t('LabelServersetup') }}
@@ -442,6 +471,7 @@ export default {
       username: '',
       password: '',
       passphrase: '',
+      apiToken: '',
       refreshToken: '',
       bookmark_file: 'bookmarks.xbel',
       bookmark_file_type: 'xbel',
@@ -462,6 +492,11 @@ export default {
           type: 'nextcloud-bookmarks',
           label: this.t('LabelAdapternextcloudfolders'),
           description: this.t('DescriptionAdapternextcloudfolders')
+        },
+        {
+          type: 'linkding',
+          label: this.t('LabelAdapterlinkding'),
+          description: this.t('DescriptionAdapterlinkding')
         },
         {
           type: 'linkwarden',
@@ -515,6 +550,7 @@ export default {
         label: this.label,
         ...(this.adapter === 'nextcloud-bookmarks' && {serverRoot: this.serverRoot, clickCountEnabled: this.clickCountEnabled}),
         ...(this.adapter === 'linkwarden' && {serverFolder: this.serverFolder}),
+        ...(this.adapter === 'linkding' && {apiToken: this.apiToken}),
         ...(this.adapter === 'git' && {branch: this.branch}),
         ...((this.adapter === 'webdav' || this.adapter === 'google-drive' || this.adapter === 'git') && {bookmark_file: this.bookmark_file}),
         ...((this.adapter === 'webdav' || this.adapter === 'google-drive' || this.adapter === 'git') && {bookmark_file_type: this.bookmark_file_type}),
@@ -540,6 +576,18 @@ export default {
       try {
         await this.$store.dispatch(actions.TEST_NEXTCLOUD_SERVER, this.server)
         this.serverTestSuccessful = true
+      } catch (e) {
+        this.serverTestError = e.message
+      }
+      this.isServerTestRunning = false
+    },
+    async testLinkdingServer() {
+      this.isServerTestRunning = true
+      this.serverTestError = ''
+      try {
+        await this.$store.dispatch(actions.TEST_LINKDING_SERVER, {rootUrl: this.server, apiToken: this.apiToken})
+        this.serverTestSuccessful = true
+        this.currentStep++
       } catch (e) {
         this.serverTestError = e.message
       }

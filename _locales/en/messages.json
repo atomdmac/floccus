@@ -830,5 +830,11 @@
   },
   "LabelOpeninnewtab": {
     "message": "Open this view in a new tab"
+  },
+  "LabelLinkdingURL": {
+    "message": "Server URL"
+  },
+  "LabelLinkdingAPIToken": {
+    "message": "API Token"
   }
 }
